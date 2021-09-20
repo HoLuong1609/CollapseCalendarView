@@ -3,11 +3,9 @@ package com.wefika.calendar;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -23,7 +21,6 @@ import com.wefika.calendar.manager.Week;
 import com.wefika.calendar.widget.DayView;
 import com.wefika.calendar.widget.WeekView;
 
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
 
@@ -34,7 +31,7 @@ import java.util.Queue;
 /**
  * Created by Blaz Solar on 28/02/14.
  */
-public class CollapseCalendarView extends LinearLayout implements View.OnClickListener {
+public class CollapseCalendarView extends LinearLayout {
 
     private static final String TAG = "CalendarView";
 
@@ -42,20 +39,18 @@ public class CollapseCalendarView extends LinearLayout implements View.OnClickLi
     private CalendarManager mManager;
 
     @NonNull
-    private TextView mTitleView;
-    @NonNull private ImageButton mPrev;
-    @NonNull private ImageButton mNext;
-    @NonNull private LinearLayout mWeeksView;
+    private LinearLayout mWeeksView;
 
-    @NonNull private final LayoutInflater mInflater;
-    @NonNull private final RecycleBin mRecycleBin = new RecycleBin();
+    @NonNull
+    private final LayoutInflater mInflater;
+    @NonNull
+    private final RecycleBin mRecycleBin = new RecycleBin();
 
-    @Nullable private OnDateSelect mListener;
+    @Nullable
+    private OnDateSelect mListener;
 
-    @NonNull private TextView mSelectionText;
-    @NonNull private LinearLayout mHeader;
-
-    @NonNull private ResizeManager mResizeManager;
+    @NonNull
+    private final ResizeManager mResizeManager;
 
     private boolean initialized;
 
@@ -74,48 +69,22 @@ public class CollapseCalendarView extends LinearLayout implements View.OnClickLi
 
         mResizeManager = new ResizeManager(this);
 
-        inflate(context, R.layout.calendar_layout, this);
+        inflate(context, R.layout.month_layout, this);
 
         setOrientation(VERTICAL);
     }
 
     public void init(@NonNull CalendarManager manager) {
-        if (manager != null) {
-
-            mManager = manager;
-
-            populateLayout();
-
-            if (mListener != null) {
-                mListener.onDateSelected(mManager.getSelectedDay());
-            }
-
+        mManager = manager;
+        populateLayout();
+        if (mListener != null) {
+            mListener.onDateSelected(mManager.getSelectedDay());
         }
     }
 
     @Nullable
     public CalendarManager getManager() {
         return mManager;
-    }
-
-    @Override
-    public void onClick(View v) {
-        Log.d(TAG, "On click");
-        if (mManager != null) {
-            int id = v.getId();
-            if (id == R.id.prev) {
-                if (mManager.prev()) {
-                    populateLayout();
-                }
-            } else if (id == R.id.next) {
-                Log.d(TAG, "next");
-                if (mManager.next()) {
-                    Log.d(TAG, "populate");
-                    populateLayout();
-                }
-            }
-
-        }
     }
 
     @Override
@@ -128,7 +97,7 @@ public class CollapseCalendarView extends LinearLayout implements View.OnClickLi
     @Nullable
     public CalendarManager.State getState() {
         if (mManager != null) {
-           return mManager.getState();
+            return mManager.getState();
         } else {
             return null;
         }
@@ -136,20 +105,6 @@ public class CollapseCalendarView extends LinearLayout implements View.OnClickLi
 
     public void setListener(@Nullable OnDateSelect listener) {
         mListener = listener;
-    }
-
-    /**
-     * @deprecated This will be removed
-     */
-    public void setTitle(@Nullable String text) {
-        if (StringUtils.isEmpty(text)) {
-            mHeader.setVisibility(View.VISIBLE);
-            mSelectionText.setVisibility(View.GONE);
-        } else {
-            mHeader.setVisibility(View.GONE);
-            mSelectionText.setVisibility(View.VISIBLE);
-            mSelectionText.setText(text);
-        }
     }
 
     @Override
@@ -167,18 +122,7 @@ public class CollapseCalendarView extends LinearLayout implements View.OnClickLi
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-
-        mTitleView = (TextView) findViewById(R.id.title);
-        mPrev = (ImageButton) findViewById(R.id.prev);
-        mNext = (ImageButton) findViewById(R.id.next);
-        mWeeksView = (LinearLayout) findViewById(R.id.weeks);
-
-        mHeader = (LinearLayout) findViewById(R.id.header);
-        mSelectionText = (TextView) findViewById(R.id.selection_title);
-
-        mPrev.setOnClickListener(this);
-        mNext.setOnClickListener(this);
-
+        mWeeksView = findViewById(R.id.weeks);
         populateLayout();
     }
 
@@ -207,23 +151,14 @@ public class CollapseCalendarView extends LinearLayout implements View.OnClickLi
     }
 
     public void populateLayout() {
-
         if (mManager != null) {
-
             populateDays();
-
-            mPrev.setEnabled(mManager.hasPrev());
-            mNext.setEnabled(mManager.hasNext());
-
-            mTitleView.setText(mManager.getHeaderText());
-
             if (mManager.getState() == CalendarManager.State.MONTH) {
                 populateMonthLayout((Month) mManager.getUnits());
             } else {
                 populateWeekLayout((Week) mManager.getUnits());
             }
         }
-
     }
 
     private void populateMonthLayout(Month month) {
@@ -299,7 +234,7 @@ public class CollapseCalendarView extends LinearLayout implements View.OnClickLi
     private WeekView getWeekView(int index) {
         int cnt = mWeeksView.getChildCount();
 
-        if(cnt < index + 1) {
+        if (cnt < index + 1) {
             for (int i = cnt; i < index + 1; i++) {
                 View view = getView();
                 mWeeksView.addView(view);
@@ -321,7 +256,7 @@ public class CollapseCalendarView extends LinearLayout implements View.OnClickLi
 
     private void cacheView(int index) {
         View view = mWeeksView.getChildAt(index);
-        if(view != null) {
+        if (view != null) {
             mWeeksView.removeViewAt(index);
             mRecycleBin.addView(view);
         }
