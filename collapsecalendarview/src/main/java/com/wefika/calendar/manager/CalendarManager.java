@@ -10,27 +10,35 @@ import org.joda.time.LocalDate;
  */
 public class CalendarManager {
 
-    @NonNull private State mState;
+    @NonNull
+    private State mState;
     @NonNull
     private RangeUnit mUnit;
-    @NonNull private LocalDate mSelected;
-    @NonNull private final LocalDate mToday;
+    @NonNull
+    private LocalDate mSelected;
+    @NonNull
+    private final LocalDate mToday;
     @Nullable
     private LocalDate mMinDate;
-    @Nullable private LocalDate mMaxDate;
-    @NonNull private Formatter formatter;
+    @Nullable
+    private LocalDate mMaxDate;
+    @NonNull
+    private Formatter formatter;
+    @NonNull
+    private final StateChangeListener mStateChangeListener;
 
     private LocalDate mActiveMonth;
 
     public CalendarManager(@NonNull LocalDate selected, @NonNull State state, @Nullable LocalDate minDate,
-                           @Nullable LocalDate maxDate) {
-        this(selected, state, minDate, maxDate, null);
+                           @Nullable LocalDate maxDate, @NonNull StateChangeListener stateChangeListener) {
+        this(selected, state, minDate, maxDate, stateChangeListener, null);
     }
 
-    public CalendarManager(@NonNull LocalDate selected, @NonNull State state, @Nullable LocalDate minDate,
-            @Nullable LocalDate maxDate, @Nullable Formatter formatter) {
+    private CalendarManager(@NonNull LocalDate selected, @NonNull State state, @Nullable LocalDate minDate,
+                           @Nullable LocalDate maxDate, @NonNull StateChangeListener stateChangeListener, @Nullable Formatter formatter) {
         mToday = LocalDate.now();
         mState = state;
+        mStateChangeListener = stateChangeListener;
 
         if (formatter == null) {
             this.formatter = new DefaultFormatter();
@@ -39,6 +47,10 @@ public class CalendarManager {
         }
 
         init(selected, minDate, maxDate);
+    }
+
+    public CalendarManager copy() {
+        return new CalendarManager(mSelected, mState, mMinDate, mMaxDate, mStateChangeListener);
     }
 
     public boolean selectDay(@NonNull LocalDate date) {
@@ -95,12 +107,11 @@ public class CalendarManager {
     }
 
     /**
-     *
      * @return index of month to focus to
      */
     public void toggleView() {
 
-        if(mState == State.MONTH) {
+        if (mState == State.MONTH) {
             toggleFromMonth();
         } else {
             toggleFromWeek();
@@ -111,6 +122,10 @@ public class CalendarManager {
     @NonNull
     public State getState() {
         return mState;
+    }
+
+    public void setState(@NonNull State state) {
+        this.mState = state;
     }
 
     public CalendarUnit getUnits() {
@@ -147,6 +162,7 @@ public class CalendarManager {
         setUnit(new Week(date, mToday, mMinDate, mMaxDate));
         mUnit.select(mSelected);
         mState = State.WEEK;
+        mStateChangeListener.onStateChanged(mState);
     }
 
     private void toggleFromWeek() {
@@ -155,6 +171,7 @@ public class CalendarManager {
         mUnit.select(mSelected);
 
         mState = State.MONTH;
+        mStateChangeListener.onStateChanged(mState);
     }
 
     private void init() {
@@ -173,7 +190,7 @@ public class CalendarManager {
     }
 
     public int getWeekOfMonth() {
-        if(mUnit.isInView(mSelected)) {
+        if (mUnit.isInView(mSelected)) {
             if (mUnit.isIn(mSelected)) { // TODO not pretty
                 return mUnit.getWeekInMonth(mSelected);
             } else if (mUnit.getFrom().isAfter(mSelected)) {
@@ -213,7 +230,8 @@ public class CalendarManager {
         mMaxDate = maxDate;
     }
 
-    @NonNull public Formatter getFormatter() {
+    @NonNull
+    public Formatter getFormatter() {
         return formatter;
     }
 
@@ -222,4 +240,7 @@ public class CalendarManager {
         WEEK
     }
 
+    public interface StateChangeListener {
+        void onStateChanged(State state);
+    }
 }
